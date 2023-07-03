@@ -87,13 +87,6 @@ def get_three_letter_code(full_name: str):
             pass
 
 
-# helper methods to help sort data by team
-def add_group_to_dict(dict, group):
-    for g in group:
-        lets = get_three_letter_code(g['Team'].iloc[0])
-        dict[lets] = g
-
-
 def add_lists(list1, list2):
     result = []
     for item1, item2 in zip(list1, list2):
@@ -107,183 +100,152 @@ def remove_strings(lst):
 
 
 # create dataframes for all the archeived odds
-df_2022 = pd.read_csv("nn-nhl/data/2022odds.csv")
-df_2021 = pd.read_csv("nn-nhl/data/2021odds.csv")
-df_2020 = pd.read_csv("nn-nhl/data/2020odds.csv")
-df_2019 = pd.read_csv("nn-nhl/data/2019odds.csv")
-df_2018 = pd.read_csv("nn-nhl/data/2018odds.csv")
-dfs_list = [df_2018, df_2019, df_2020, df_2021, df_2022]
-year_order = [2018, 2019, 2020, 2021, 2022]
+def get_odds(my_id:str) -> pd.Series:
+    year = int(my_id[4:8])
+    if int(my_id[9:11]) >= 10:
+        year += 1
+    filepath = f"data/{year}odds.csv"
+    df = pd.read_csv(filepath)
+    date = f"{my_id[9:11]}{my_id[12:]}"
+    if date[0] == str(0):
+        date = date[1:]
+    df = df[df["Date"] == int(date)]
+    for index, row in df.iterrows():
+        if get_three_letter_code(row["Team"]) == my_id[:3]:
+            return row
+    raise ValueError("Your my_id is incorrect.")
 
 
-# create dictionaries of the advanced data sorted by team
-eighteen_dict = {}
-nineteen_dict = {}
-twenty_dict = {}
-twenty_one_dict = {}
-twenty_two_dict = {}
+def get_dict(my_id:str) -> dict:
+    team_dict = {}
+    year = int(my_id[4:8])
+    if int(my_id[9:11]) >= 10:
+        year += 1
+    filepath = f"data/adv_{year}.csv"
+    df = pd.read_csv(filepath)
+    df_groups = [group for _, group in df.groupby('Team')]
 
-eighteen_df = pd.read_csv("nn-nhl/data/adv_2018.csv")
-nineteen_df = pd.read_csv("nn-nhl/data/adv_2019.csv")
-twenty_df = pd.read_csv("nn-nhl/data/adv_2020.csv")
-twenty_one_df = pd.read_csv("nn-nhl/data/adv_2021.csv")
-twenty_two_df = pd.read_csv("nn-nhl/data/adv_2022.csv")
+    for group in df_groups:
+        abbreviation = get_three_letter_code(group['Team'].iloc[0])
+        team_dict[abbreviation] = group
 
-eighteen_group = [group for _, group in eighteen_df.groupby('Team')]
-nineteen_group = [group for _, group in nineteen_df.groupby('Team')]
-twenty_group = [group for _, group in twenty_df.groupby('Team')]
-twenty_one_group = [group for _, group in twenty_one_df.groupby('Team')]
-twenty_two_group = [group for _, group in twenty_two_df.groupby('Team')]
+    return team_dict
 
-add_group_to_dict(eighteen_dict, eighteen_group)
-add_group_to_dict(nineteen_dict, nineteen_group)
-add_group_to_dict(twenty_dict, twenty_group)
-add_group_to_dict(twenty_one_dict, twenty_one_group)
-add_group_to_dict(twenty_two_dict, twenty_two_group)
 
-dicts_list = [eighteen_dict, nineteen_dict, twenty_dict, twenty_one_dict, twenty_two_dict]
+def get_opp_score(my_id: str) -> int:
+    year = int(my_id[4:8])
+    if int(my_id[9:11]) >= 10:
+        year += 1
+    filepath = f"data/{year}odds.csv"
+    df = pd.read_csv(filepath)
+    date = f"{my_id[9:11]}{my_id[12:]}"
+    if date[0] == str(0):
+        date = date[1:]
+    df = df[df["Date"] == int(date)].reset_index()
+    for index, row in df.iterrows():
+        if get_three_letter_code(row["Team"]) == my_id[:3]:
+            if (index % 2) == 0:
+                return int(df["Final"].iloc[index + 1])
+            return int(df["Final"].iloc[index - 1])
+    raise ValueError("Something went wrong.")
 
 
 def get_open_ml(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            l1.append(int(row["Open"]))
-            if int(row["Final"]) > get_opp_score(my_id):
-                l1.append(1)
-            else:
-                l1.append(0)
+    odds = get_odds(my_id)
+    l1.append(int(odds.loc["Open"]))
+    if int(odds.loc["Final"]) > get_opp_score(my_id):
+        l1.append(1)
+    else:
+        l1.append(0)
     return l1
 
 
 def get_close_ml(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            l1.append(int(row["Close"]))
-            if int(row["Final"]) > get_opp_score(my_id):
-                l1.append(1)
-            else:
-                l1.append(0)
+    odds = get_odds(my_id)
+    l1.append(int(odds.loc["Close"]))
+    if int(odds.loc["Final"]) > get_opp_score(my_id):
+        l1.append(1)
+    else:
+        l1.append(0)
     return l1
 
 
 # return [line, over/under (over is 1), result]
 def get_open_ou_line(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            ou = float(row["OpenOU"])
-            l1.append(ou)
-            total = int(row["Final"]) + int(get_opp_score(my_id))
-            if row["VH"] == "V":
-                l1.append(1)
-                if total > ou:
-                    l1.append(1)
-                else:
-                    l1.append(0)
-            else:
-                l1.append(0)
-                if total < ou:
-                    l1.append(1)
-                else:
-                    l1.append(0)
+    odds = get_odds(my_id)
+    ou = float(odds.loc["OpenOU"])
+    l1.append(ou)
+    total = int(odds.loc["Final"]) + int(get_opp_score(my_id))
+    if odds.loc["VH"] == "V":
+        l1.append(1)
+        if total > ou:
+            l1.append(1)
+        else:
+            l1.append(0)
+    else:
+        l1.append(0)
+        if total < ou:
+            l1.append(1)
+        else:
+            l1.append(0)
     return l1
 
 
 def get_open_ou_odds(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            l1.append(row["OpenOdds"])
+    odds = get_odds(my_id)
+    l1.append(odds.loc["OpenOdds"])
     return l1
 
 
 # return [line, over/under (over is 1), result]
 def get_close_ou_line(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            ou = float(row["CloseOU"])
-            l1.append(ou)
-            total = int(row["Final"]) + int(get_opp_score(my_id))
-            if row["VH"] == "V":
-                l1.append(1)
-                if total > ou:
-                    l1.append(1)
-                else:
-                    l1.append(0)
-            else:
-                l1.append(0)
-                if total < ou:
-                    l1.append(1)
-                else:
-                    l1.append(0)
+    odds = get_odds(my_id)
+    ou = float(odds.loc["CloseOU"])
+    l1.append(ou)
+    total = int(odds.loc["Final"]) + int(get_opp_score(my_id))
+    if odds.loc["VH"] == "V":
+        l1.append(1)
+        if total > ou:
+            l1.append(1)
+        else:
+            l1.append(0)
+    else:
+        l1.append(0)
+        if total < ou:
+            l1.append(1)
+        else:
+            l1.append(0)
     return l1
 
 
 def get_close_ou_odds(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            l1.append(int(row["CloseOdds"]))
-    return l1
+    odds = get_odds(my_id)
+    l1.append(odds.loc["CloseOdds"])
 
 
 def get_puck_line(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            l1.append(float(row["PL"]))
-            if (int(row["Final"]) + float(row["PL"])) > int(get_opp_score(my_id)):
-                l1.append(1)
-            else:
-                l1.append(0)
+    odds = get_odds(my_id)
+    pl = float(odds.loc["PL"])
+    l1.append(pl)
+    if (int(odds.loc["Final"]) + float(odds.loc["PL"])) > int(get_opp_score(my_id)):
+        l1.append(1)
+    else:
+        l1.append(0)
     return l1
 
 
 def get_puck_line_odds(my_id: str) -> list:
     l1 = []
-    df = get_df(my_id)
-    for index, row in df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            l1.append(int(row["PLOdds"]))
-    return l1
+    odds = get_odds(my_id)
+    l1.append(odds.loc["PLOdds"])
 
-
-def get_df(my_id: str) -> pd.DataFrame:
-    season = int(my_id[4:8])
-    if int(my_id[9:11]) >= 10:
-        season += 1
-    df = dfs_list[year_order.index(season)]
-    date = f"{my_id[9:11]}{my_id[12:]}"
-    if date[0] == str(0):
-        date = date[1:]
-    return df[df["Date"] == int(date)]
-
-
-def get_opp_score(my_id: str) -> int:
-    season = int(my_id[4:8])
-    if int(my_id[9:11]) >= 10:
-        season += 1
-    df = dfs_list[year_order.index(season)]
-    date = f"{my_id[9:11]}{my_id[12:]}"
-    if date[0] == str(0):
-        date = date[1:]
-    small_df = df[df["Date"] == int(date)]
-    for index, row in small_df.iterrows():
-        if get_three_letter_code(row["Team"]) == my_id[:3]:
-            if (index % 2) == 0:
-                return int(df["Final"].iloc[index + 1])
-            return int(df["Final"].iloc[index - 1])
-    raise ValueError("Something went wrong.")
 
 
 def get_last_n(my_id: str, how_many: int) -> list:
@@ -296,12 +258,16 @@ def get_last_n(my_id: str, how_many: int) -> list:
         season += 1
 
     # create a df with only the relevant data to the team and the year
-    working_dict = dicts_list[year_order.index(season)]
+    working_dict = get_dict(my_id)
     working_df = working_dict[my_id[:3]]
 
     # figure out what game number the given game is
     working_df = working_df.reset_index()
     dates_list = working_df['Date'].tolist()
+
+    if "/" in dates_list[0]:
+        dates_list = [datetime.strptime(date, '%m/%d/%Y').strftime('%Y-%m-%d') for date in dates_list]
+
     index = dates_list.index(my_id[4:]) - 1
     if index == -1:
         return [None] * 62
@@ -329,7 +295,7 @@ def get_rest_days(my_id: str) -> int:
         season += 1
 
     # create a df with only the relevant data to the team and the year
-    working_dict = dicts_list[year_order.index(season)]
+    working_dict = get_dict(my_id)
     working_df = working_dict[my_id[:3]]
 
     # figure out what game number the given game is

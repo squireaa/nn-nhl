@@ -1,38 +1,16 @@
 import pandas as pd
 import os
 import sys
+import numpy as np
 current_dir = os.path.dirname(os.path.abspath(__file__))
 parent_dir = os.path.abspath(os.path.join(current_dir, os.pardir))
 sys.path.append(parent_dir)
 from getter_methods import *
 
 
-def format_date_df(year):
-    df = pd.read_csv(
-        f"C:/Users/Owner/Desktop/cs stuff/Open Source/nhl-nn-sports-betting/data/nhl_adv_data20{year}.csv")
-    df = df.dropna(axis=1, how='any')
-    df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
-    # df['Date'] = pd.to_datetime(df['Date'], format='%Y-%m-%d')
-    df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
-    df.to_csv(f"nhl_dropped_20{year}.csv")
-
-
 def generate_col_names(num_needed: int) -> list:
-    return ['Column' + str(i+1) for i in range(num_needed)]
+        return ['Column' + str(i+1) for i in range(num_needed)]
 
-every_my_id = list()
-start_year = 18
-end_year = 23
-for year in range(start_year, end_year):
-    file_path = f"nn-nhl/data/adv_20{year}.csv"
-    df = pd.read_csv(file_path)
-
-    num_rows = len(df)
-    for i in range(num_rows):
-        team_abv = get_three_letter_code(df['Team'].iloc[i])
-        date = df['Date'].iloc[i]
-        every_my_id.append(f"{team_abv}-{date}")
-        
 
 def get_main_metrics(my_id: str) -> list:
     to_return = []
@@ -44,7 +22,8 @@ def get_main_metrics(my_id: str) -> list:
     to_return.extend([get_year(my_id)])
     return to_return
 
-def build_ml():
+
+def build_ml(every_my_id:list) -> None:
     col_names = generate_col_names(502)
     ml_X_df = pd.DataFrame(columns=col_names)
     ml_index = 0
@@ -84,7 +63,8 @@ def build_ml():
     ml_X_df = ml_X_df.dropna()
     ml_X_df.to_csv("ml_X.csv")
 
-def build_pl():
+
+def build_pl(every_my_id:list) -> None:
     col_names = generate_col_names(503)
     pl_X_df = pd.DataFrame(columns=col_names)
     pl_index = 0
@@ -113,14 +93,14 @@ def build_pl():
             pl_index += 1
         except:
             pass
-
+        
         print(f"{int(i / 2)}/{int(num_of_ids / 2)}")
 
     pl_X_df = pl_X_df.dropna()
     pl_X_df.to_csv("pl_X.csv")
 
 
-def build_ou():
+def build_ou(every_my_id:list) -> None:
     col_names = generate_col_names(504)
     ou_X_df = pd.DataFrame(columns=col_names)
     ou_index = 0
@@ -166,4 +146,22 @@ def build_ou():
     ou_X_df.to_csv("ou_X.csv")
 
 
-build_ou()
+def format_data(input_name:str):
+    df = pd.read_csv(input_name)
+    df = df.replace("-", np.nan)
+    df = df.dropna(axis=1, how='any')
+
+    every_my_id = list()
+
+    num_rows = len(df)
+    for i in range(num_rows):
+        team_abv = get_three_letter_code(df['Team'].iloc[i])
+        date = df['Date'].iloc[i]
+        every_my_id.append(f"{team_abv}-{date}")
+    
+    build_ml(every_my_id)
+    build_pl(every_my_id)
+    build_ou(every_my_id)
+
+
+format_data("data/adv_2023.csv")
