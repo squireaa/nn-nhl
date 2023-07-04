@@ -23,7 +23,7 @@ def get_main_metrics(my_id: str) -> list:
     return to_return
 
 
-def build_ml(every_my_id:list) -> None:
+def build_ml(every_my_id:list, output_name:str) -> None:
     col_names = generate_col_names(502)
     ml_X_df = pd.DataFrame(columns=col_names)
     ml_index = 0
@@ -61,10 +61,10 @@ def build_ml(every_my_id:list) -> None:
         print(f"{int(i / 2)}/{int(num_of_ids / 2)}")
 
     ml_X_df = ml_X_df.dropna()
-    ml_X_df.to_csv("ml_X.csv")
+    ml_X_df.to_csv(output_name)
 
 
-def build_pl(every_my_id:list) -> None:
+def build_pl(every_my_id:list, output_name:str) -> None:
     col_names = generate_col_names(503)
     pl_X_df = pd.DataFrame(columns=col_names)
     pl_index = 0
@@ -97,10 +97,10 @@ def build_pl(every_my_id:list) -> None:
         print(f"{int(i / 2)}/{int(num_of_ids / 2)}")
 
     pl_X_df = pl_X_df.dropna()
-    pl_X_df.to_csv("pl_X.csv")
+    pl_X_df.to_csv(output_name)
 
 
-def build_ou(every_my_id:list) -> None:
+def build_ou(every_my_id:list, output_name:str) -> None:
     col_names = generate_col_names(504)
     ou_X_df = pd.DataFrame(columns=col_names)
     ou_index = 0
@@ -143,25 +143,35 @@ def build_ou(every_my_id:list) -> None:
         print(f"{int(i / 2)}/{int(num_of_ids / 2)}")
 
     ou_X_df = ou_X_df.dropna()
-    ou_X_df.to_csv("ou_X.csv")
+    ou_X_df.to_csv(output_name)
 
 
-def format_data(input_name:str):
+def format_data(input_name:str, output_name:str) -> None:
     df = pd.read_csv(input_name)
-    df = df.replace("-", np.nan)
-    df = df.dropna(axis=1, how='any')
 
-    every_my_id = list()
+    # removes columns with an abundance of NaN
+    columns_to_drop = ["GF%", "SCGF%", "HDGF%", "HDSH%", "HDSV%", "MDGF%", "MDSH%", "MDSV%", "LDGF%"]
+    for column in columns_to_drop:
+        df = df.drop(column, axis=1)
+    
+    # converts to datetime type
+    df['Date'] = pd.to_datetime(df['Date'], format='%m/%d/%Y')
 
+    # uses datetype type to convert to the proper format of string
+    df['Date'] = df['Date'].dt.strftime('%Y-%m-%d')
+
+    # replaces the few straggling NaN's with 0.0, wont affect long-term results
+    df = df.replace("-", 0.0)
+    df.to_csv(output_name)
+
+
+def build_X(input_name:str, output_name:str, which_X:function) -> None:
+    df = pd.read_csv(input_name)
     num_rows = len(df)
+    every_my_id = list()
     for i in range(num_rows):
         team_abv = get_three_letter_code(df['Team'].iloc[i])
         date = df['Date'].iloc[i]
         every_my_id.append(f"{team_abv}-{date}")
-    
-    build_ml(every_my_id)
-    build_pl(every_my_id)
-    build_ou(every_my_id)
-
-
-format_data("data/adv_2023.csv")
+        
+    which_X(every_my_id, output_name)
