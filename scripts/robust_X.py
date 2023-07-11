@@ -164,6 +164,8 @@ def format_data(input_name:str, output_name:str) -> None:
     df = df.replace("-", 0.0)
     df.to_csv(output_name)
 
+    # I still need something to change the last column name to "Outcome"
+
 
 def build_X(input_name:str, output_name:str, which_X:function) -> None:
     df = pd.read_csv(input_name)
