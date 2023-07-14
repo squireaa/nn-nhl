@@ -167,7 +167,9 @@ def format_data(input_name:str, output_name:str) -> None:
     # I still need something to change the last column name to "Outcome"
 
 
-def build_X(input_name:str, output_name:str, which_X:function) -> None:
+from typing import Callable
+
+def build_X(input_name:str, output_name:str, which_X: Callable[[list, str], None]) -> None:
     df = pd.read_csv(input_name)
     num_rows = len(df)
     every_my_id = list()
@@ -177,3 +179,10 @@ def build_X(input_name:str, output_name:str, which_X:function) -> None:
         every_my_id.append(f"{team_abv}-{date}")
         
     which_X(every_my_id, output_name)
+
+
+# build_X("data/adv_2023.csv", "new_pl_X.csv", build_pl)
+# build_X("data/adv_2023.csv", "new_ou_X.csv", build_ou)
+
+format_data("new_pl_X.csv", "2023_pl_X")
+format_data("new_ou_X.csv", "2023_ou_X")

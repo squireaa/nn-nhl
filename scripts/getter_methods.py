@@ -227,6 +227,7 @@ def get_close_ou_odds(my_id: str) -> list:
     l1 = []
     odds = get_odds(my_id)
     l1.append(odds.loc["CloseOdds"])
+    return l1
 
 
 def get_puck_line(my_id: str) -> list:
@@ -245,6 +246,7 @@ def get_puck_line_odds(my_id: str) -> list:
     l1 = []
     odds = get_odds(my_id)
     l1.append(odds.loc["PLOdds"])
+    return l1
 
 
 
