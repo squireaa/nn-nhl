@@ -24,18 +24,7 @@ Predicts the outcome of NHL games based on trained neural networks
 - Learn how to take advantage of technologies like ipynb's, the pytorch library, and cuda-based training
 - Leverage advnaced analytics and my own data analysis skills to gain an upper hand against sportsbook odds-makers
 
-# Challenges
-- This project required I use 10+ different APIs I had to read documentation for in order to collect a dataset I considered thourough enough
-- Data availability was extremely scarse, especially as someone wihtout a budget to buy API keys or archived databased that would have enabled me to collect all data from just one or two places
-- Data quality was another problem, as several of the APIs I tried working with would have wrong teams or wrong dates in their data which would make their full dataframe unusable
-- Finding out a model that gave the lowest loss and highest accuracy required careful experimentation and fine-tuning
-
-# Scope
-- Data in my X dataframes includes ALL advanced analytics for the last N games, where N includes the last 3, 5, and 10 games, the player availability, the year, the rest time, the odds, the line, and the outcome
-- The project modeled games over the last 5 years, using both open and close odds, doubling the required data
-- The project will eventually be applicable to real-time games, and the code is robust enough to quickly retrain each model once new, more recent data is available
-
-# Impact
+# Results
 - The accuracy for the moneyline odds is solidly in the 90% accuracy range, which could have huge implications if that accuracy holds throughout the next season
 - The data shows that under-over betting does adhere to the stereotype that under-over bets are a 50/50 gamble
 - Spread data was ~95% as accurate as what's thought feasibly possible for neural-networks to predict
