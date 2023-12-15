@@ -23,3 +23,6 @@ Predicts the outcome of NHL games based on trained neural networks
 - The accuracy for the moneyline odds is solidly in the 90% accuracy range, which could have huge implications if that accuracy holds throughout the next season
 - The data shows that under-over betting does adhere to the stereotype that under-over bets are a 50/50 gamble
 - Spread data was ~95% as accurate as what's thought feasibly possible for neural-networks to predict
+
+# Graphs
+![image](https://github.com/squireaa/nn-nhl/blob/main/nnnhlpicture.PNG)
