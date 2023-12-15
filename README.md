@@ -19,11 +19,6 @@ Predicts the outcome of NHL games based on trained neural networks
 - Results were then rigorously tested
 - Future: models will be used to give real-time predictions for live games
 
-# Motive
-- The ultimate motive for this project was to simply improve my own data-analysis skills on a topic that I found interesting and relevant
-- Learn how to take advantage of technologies like ipynb's, the pytorch library, and cuda-based training
-- Leverage advnaced analytics and my own data analysis skills to gain an upper hand against sportsbook odds-makers
-
 # Results
 - The accuracy for the moneyline odds is solidly in the 90% accuracy range, which could have huge implications if that accuracy holds throughout the next season
 - The data shows that under-over betting does adhere to the stereotype that under-over bets are a 50/50 gamble
